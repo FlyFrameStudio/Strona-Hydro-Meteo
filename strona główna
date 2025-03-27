@@ -1,0 +1,65 @@
+import { useState } from "react";
+import { Button, Input, Card, CardContent } from "@/components/ui";
+
+export default function HydroDataFilter() {
+  const [station, setStation] = useState("");
+  const [yearFrom, setYearFrom] = useState("");
+  const [yearTo, setYearTo] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  const handleRunScript = async () => {
+    setIsProcessing(true);
+    setIsCompleted(false);
+    
+    try {
+      const response = await fetch("/api/run-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ station, yearFrom, yearTo })
+      });
+      
+      if (response.ok) {
+        setIsCompleted(true);
+      } else {
+        alert("Błąd podczas przetwarzania danych.");
+      }
+    } catch (error) {
+      console.error("Błąd:", error);
+      alert("Wystąpił błąd.");
+    }
+    
+    setIsProcessing(false);
+  };
+
+  return (
+    <div className="flex flex-col items-center p-6">
+      <Card className="w-96 p-4">
+        <CardContent>
+          <h2 className="text-xl font-bold mb-4">Podaj warunki filtrowania</h2>
+          <label className="block">Podaj nazwę stacji:</label>
+          <Input value={station} onChange={(e) => setStation(e.target.value)} className="mb-2" />
+          
+          <label className="block">Podaj rok hydrologiczny od:</label>
+          <Input type="number" value={yearFrom} onChange={(e) => setYearFrom(e.target.value)} className="mb-2" />
+          
+          <label className="block">Podaj rok hydrologiczny do:</label>
+          <Input type="number" value={yearTo} onChange={(e) => setYearTo(e.target.value)} className="mb-4" />
+          
+          <Button onClick={handleRunScript} disabled={isProcessing}>
+            {isProcessing ? "Przetwarzanie..." : "Uruchom filtrację"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {isCompleted && (
+        <div className="mt-4 text-center">
+          <p>Filtrowanie zakończone. Czy chcesz pobrać plik wynikowy?</p>
+          <Button as="a" href="/api/download" download>
+            Pobierz plik
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
